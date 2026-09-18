@@ -1,0 +1,16 @@
+2026-09-18 12:26:19,238 | INFO | __main__ | main:13 | Aplicación iniciada
+2026-09-18 12:26:19,239 | INFO | database | connect:8 | Intentando conectar a la base de datos
+2026-09-18 12:26:19,239 | INFO | database | connect:17 | Conexión exitosa
+2026-09-18 12:26:19,239 | INFO | __main__ | main:17 | Aplicación finalizada
+2026-09-18 12:32:04,104 | INFO | root | setup_logging:38 | Logging setup finalizado
+2026-09-18 12:32:04,105 | INFO | __main__ | main:13 | Aplicación iniciada
+2026-09-18 12:32:04,105 | INFO | database | connect:8 | Intentando conectar a la base de datos
+2026-09-18 12:32:04,105 | INFO | database | connect:17 | Conexión exitosa
+2026-09-18 12:32:04,105 | INFO | __main__ | main:17 | Aplicación finalizada
+2026-09-18 12:43:19,550 | INFO | logging_config | setup_logging:38 | Logging setup hecho
+2026-09-18 12:43:30,224 | INFO | logging_config | setup_logging:38 | Logging setup hecho
+2026-09-18 12:44:19,111 | INFO | root | setup_logging:38 | Logging setup hecho
+2026-09-18 12:44:19,111 | INFO | __main__ | main:13 | Aplicación iniciada
+2026-09-18 12:44:19,111 | INFO | database | connect:8 | Intentando conectar a la base de datos
+2026-09-18 12:44:19,111 | INFO | database | connect:17 | Conexión exitosa
+2026-09-18 12:44:19,111 | INFO | __main__ | main:17 | Aplicación finalizada
