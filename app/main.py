@@ -1,7 +1,7 @@
 import logging
 
-from logging_config import setup_logging
-from database import connect
+from app.logging_config import setup_logging
+from app.database import connect
 
 
 setup_logging()

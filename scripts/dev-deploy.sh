@@ -3,9 +3,9 @@
 # 🛑 1. Detener el script inmediatamente si ocurre algún error
 set -e
 
-# 📁 2. Definir rutas (Configura esto según tu servidor)
+# 📁 2. Definir rutas (Configura esto según tu servidor) - puede ser el wheel y entonces necesita insertar pip install app_v1.0.2.whl
 APP_DIR="/var/www/mi-api"
-VENV_DIR="$APP_DIR/venv"
+VENV_DIR="$APP_DIR/.venv"
 
 echo "🚀 Iniciando el despliegue de la API... establecer variables entorno, echo messsages de sus valores"
 
@@ -33,7 +33,7 @@ echo "🗄️ Ejecutando migraciones de la base de datos... i.e. changelogs"
 
 # 🔄 7. Reiniciar EL SERVICIO/la API para que cargue el código nuevo
 echo "🔄 Reiniciando el servicio de la API..."
-# 'mi-api' es el servicio que creaste en el servidor para correr Gunicorn o Uvicorn
+# 'mi-app' es el servicio que creaste en el servidor para correr Gunicorn o Uvicorn
 sudo systemctl restart mi-app
 
 echo "✅ ¡Despliegue finalizado con éxito!"
