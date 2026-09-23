@@ -1,0 +1,136 @@
+name: Release y DEV Deploy (CD)
+
+# Se activa por push en main (para Dev), manualmente (para QA), o por Tags (para Prod)
+on:
+  workflow_run:
+    workflows: [ "PR build and test" ]   # nombre exacto del primer workflow
+    types: [ completed ]
+  workflow_dispatch: # Esto activa un botón en GitHub para poder lanzar manualmente
+
+jobs:
+  # 1. BUILD AND TEST
+  build-test:
+    if: >
+      ${
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.conclusion == 'success')
+        ||
+        github.event_name == 'workflow_dispatch'
+      }
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip' # ⚡ Optimiza el tiempo: guarda en caché las librerías para futuros builds
+
+      - name: Instalar herramientas de empaquetado y dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel build
+          pip install -r requirements.txt
+          pip install flake8
+          pip install pytest pytest-cov
+      #          pip install black
+      #      - name: Formatear código (Estilo Black) Si alguien olvida formatear su código, el Build falla
+      #        run: black --check .
+
+      - name: Validar errores de sintaxis (Linter)
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      # AQUÍ SE PRODUCE EL COMPILADO REAL:
+      # Este comando lee tu archivo 'setup.py' y empaqueta tu API en la carpeta 'dist/'
+      - name: Compilar paquete (usa el setup.py con Setuptools para generar los wheels)
+        run: python -m build
+
+      # Guardamos el paquete compilado (.whl) como un artefacto de GitHub
+      # Esto nos servirá para usarlo en el siguiente trabajo (Test) o para desplegarlo
+      - name: Guardar paquete compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: paquete-app-compilado
+          path: dist/
+          retention-days: 1
+          run: echo "Comandos para subir al repositorio de versiones"
+
+      - name: Validacion de la instalacion de la app
+        run: |
+          pip install dist/*.whl
+          echo "Comandos para probar que se puede ejecutar e instalar desde el repositorio de versiones"
+
+      - name: Ejecutar Tests
+        # Indicamos que use pytest
+        run: |
+          pytest
+
+  # 2. CREAR RELEASE: Solo corre si subiste una etiqueta (Tag) como v1.2.3
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Crear Release Oficial en GitHub
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub te da este permiso automáticamente
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Versión ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+  # 3. TRABAJO DE DESPLIEGUE A DEV: Automatizado al unir código a main
+  deploy-to-dev:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Desplegar en Servidor de Desarrollo
+        run: echo "🚀 Desplegando la app de Python en el entorno de DEV..."
+
+  # TRABAJO 3: Notificación si algo sale mal (Solo corre si los anteriores fallan)
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: [ build-test, release, deploy-to-dev ] # Espera a que los otros terminen
+    if: failure() # ⚠️ IMPORTANTE: Solo se ejecuta si alguno de los anteriores falló
+    steps:
+      - name: ECHO alerta
+        run: |
+          echo "🚨 ALERTA: El release and dev deploy job ha fallado."
+          echo "Por favor, revisa los logs del flujo de trabajo."
+
+      - name: Enviar correo de alerta por fallo
+        uses: dawidd6/action-send-mail@v4
+        with:
+          # 1. Configuración de tu servidor de correo (Ejemplo con Gmail)
+          server_address: ://gmail.com
+          server_port: 465
+
+          # 2. Tus credenciales protegidas con GitHub Secrets (NUNCA las escribas en texto plano aquí)
+          username: ${{ secrets.EMAIL_REMITENTE }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+
+          # 3. Datos del correo electrónico
+          subject: "🚨 ERROR: Falló el pipeline en el repositorio ${{ github.repository }}"
+          to: jefe-de-equipo@tuempresa.com, tu-email@tuempresa.com # Destinatarios separados por coma
+          from: Alertas GitHub Actions <tu-email-remitente@gmail.com>
+
+          # 4. El mensaje del correo (Soporta variables de GitHub)
+          body: |
+            ¡Hola equipo!
+
+            El Release-Dev deploy pipeline ha FALLADO.
+
+            - 🛠️ Proyecto: ${{ github.repository }}
+            - 🌿 Rama: ${{ github.ref_name }}
+            - 👨‍💻 Autor del cambio: ${{ github.actor }}
+            - 📝 Commit: ${{ github.sha }}
+
+            Por favor, revisen los logs y corrijan el error lo antes posible:
+            https://github.com{{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -1,0 +1,69 @@
+on:
+  workflow_dispatch: # Esto activa un botón en GitHub para lanzar QA manualmente
+
+jobs:
+
+  # JOB 1. DESPLIEGUE A QA: Automatizado al unir código a main
+  deploy-to-qa:
+    if: >
+      ${
+        github.event_name == 'workflow_dispatch'
+      }
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: mENSAJE DE ENTORNO VARIABLES ETC
+        run: echo "🚀 Desplegando la app de Python en el entorno de QA... Llamar a script"
+
+      - name: Ejecutar script de despliegue en el servidor remoto via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}         # La IP de tu servidor (ej: 192.168.1.50)
+          username: ${{ secrets.SERVER_USER }}     # Tu usuario del servidor (ej: ubuntu o root)
+          key: ${{ secrets.SERVER_SSH_KEY }}       # Tu llave privada SSH para entrar sin contraseña
+          script: |
+            chmod +x /var/www/mi-api/dev-deploy.sh
+            /var/www/mi-api/dev-deploy.sh
+
+  # JOB 2: Notificación si algo sale mal (Solo corre si los anteriores fallan)
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: [ deploy-to-qa ] # Espera a que termine
+    if: failure() # ⚠️ IMPORTANTE: Solo se ejecuta si alguno de los anteriores falló
+    steps:
+      - name: ECHO alerta
+        run: |
+          echo "🚨 ALERTA: El qa deploy job ha fallado."
+          echo "Por favor, revisa los logs del flujo de trabajo."
+
+      - name: Enviar correo de alerta por fallo
+        uses: dawidd6/action-send-mail@v4
+        with:
+          # 1. Configuración de tu servidor de correo (Ejemplo con Gmail)
+          server_address: ://gmail.com
+          server_port: 465
+
+          # 2. Tus credenciales protegidas con GitHub Secrets (NUNCA las escribas en texto plano aquí)
+          username: ${{ secrets.EMAIL_REMITENTE }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+
+          # 3. Datos del correo electrónico
+          subject: "🚨 ERROR: Falló el pipeline en el repositorio ${{ github.repository }}"
+          to: jefe-de-equipo@tuempresa.com, tu-email@tuempresa.com # Destinatarios separados por coma
+          from: Alertas GitHub Actions <tu-email-remitente@gmail.com>
+
+          # 4. El mensaje del correo (Soporta variables de GitHub)
+          body: |
+            ¡Hola equipo!
+
+            El qa deploy pipeline ha FALLADO.
+
+            - 🛠️ Proyecto: ${{ github.repository }}
+            - 🌿 Rama: ${{ github.ref_name }}
+            - 👨‍💻 Autor del cambio: ${{ github.actor }}
+            - 📝 Commit: ${{ github.sha }}
+
+            Por favor, revisen los logs y corrijan el error lo antes posible:
+            https://github.com{{ github.repository }}/actions/runs/${{ github.run_id }}

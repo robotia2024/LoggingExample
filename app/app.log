@@ -14,3 +14,8 @@
 2026-09-18 12:44:19,111 | INFO | database | connect:8 | Intentando conectar a la base de datos
 2026-09-18 12:44:19,111 | INFO | database | connect:17 | Conexión exitosa
 2026-09-18 12:44:19,111 | INFO | __main__ | main:17 | Aplicación finalizada
+2026-09-23 10:40:26,192 | INFO | root | setup_logging:38 | Logging setup hecho
+2026-09-23 10:40:26,192 | INFO | __main__ | main:13 | Aplicación iniciada
+2026-09-23 10:40:26,192 | INFO | database | connect:8 | Intentando conectar a la base de datos
+2026-09-23 10:40:26,192 | INFO | database | connect:17 | Conexión exitosa
+2026-09-23 10:40:26,192 | INFO | __main__ | main:17 | Aplicación finalizada
