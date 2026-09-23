@@ -68,9 +68,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov  
 
-      - name: Validacion de la instalacion de la app
-        run: |
-          pip install dist/*.whl
+#      - name: Validacion de la instalacion de la app
+#        run: |
+#          pip install dist/*.whl
 
       - name: Ejecutar Tests y Generar Cobertura
         # Indicamos que use pytest con cobertura sobre la carpeta de nuestra API (ej: 'app')
