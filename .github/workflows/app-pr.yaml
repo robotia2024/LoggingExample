@@ -50,7 +50,6 @@ jobs:
 
       - name: Validacion de la instalacion de la app
         run: |
-          unzip dist/*.zip
           pip install dist/*.whl
 
   # --- TRABAJO 2: TEST & COVERAGE ---
