@@ -66,17 +66,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov  
+          pip install pytest pytest-cov
 
-#      - name: Validacion de la instalacion de la app
-#        run: |
-#          pip install dist/*.whl
+      - name: Validacion de la instalacion de la app
+        run: |
+          pip install dist/*.whl
 
       - name: Ejecutar Tests y Generar Cobertura
         # Indicamos que use pytest con cobertura sobre la carpeta de nuestra API (ej: 'app')
         run: |
-#          pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=80
-          pytest --cov=app --cov-report=term-missing --cov-report=xml
+          pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=1
+
       - name: Subir Reporte de Cobertura a GitHub Actions Artifacts
         uses: actions/upload-artifact@v4
         with:
