@@ -48,6 +48,11 @@ jobs:
           path: dist/
           retention-days: 1
 
+      - name: Validacion de la instalacion de la app
+        run: |
+          unzip dist/*.zip
+          pip install dist/*.whl
+
   # --- TRABAJO 2: TEST & COVERAGE ---
   test:
     runs-on: ubuntu-latest
@@ -67,11 +72,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov
-
-      - name: Validacion de la instalacion de la app
-        run: |
-          unzip dist/*.zip
-          pip install dist/*.whl
 
       - name: Ejecutar Tests y Generar Cobertura
         # Indicamos que use pytest con cobertura sobre la carpeta de nuestra API (ej: 'app')
