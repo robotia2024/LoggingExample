@@ -1,9 +1,5 @@
 from setuptools import setup, find_packages
 
-# Leemos el archivo README para usarlo como la descripción larga del proyecto
-with open("Readme.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
-
 setup(
     # 1. Datos básicos del paquete
     name="mi-super-app",             # El nombre con el que se instalará (ej: pip install mi-super-api)
@@ -11,7 +7,6 @@ setup(
     author="Tu Nombre o Empresa",
     author_email="tu-email@ejemplo.com",
     description="Una API increíble desarrollada con Python",
-    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com",
 
