@@ -70,7 +70,9 @@ jobs:
 
       - name: Validacion de la instalacion de la app
         run: |
-          pip install dist/*.whl
+          mkdir -p dist/extracted
+          unzip dist/paquete-app-compilado.zip -d dist/extracted
+          pip install dist/extracted/mi_super_app-1.0.0-py3-none-any.whl
 
       - name: Ejecutar Tests y Generar Cobertura
         # Indicamos que use pytest con cobertura sobre la carpeta de nuestra API (ej: 'app')
@@ -104,32 +106,32 @@ jobs:
           echo "🚨 ALERTA: Las pruebas de Python han fallado en el commit ${{ github.sha }}."
           echo "Por favor, revisa los logs del flujo de trabajo."
 
-      - name: Enviar correo de alerta por fallo
-        uses: dawidd6/action-send-mail@v4
-        with:
-          # 1. Configuración de tu servidor de correo (Ejemplo con Gmail)
-          server_address: ://gmail.com
-          server_port: 465
-
-          # 2. Tus credenciales protegidas con GitHub Secrets (NUNCA las escribas en texto plano aquí)
-          username: ${{ secrets.EMAIL_REMITENTE }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-
-          # 3. Datos del correo electrónico
-          subject: "🚨 ERROR: Falló el pipeline en el repositorio ${{ github.repository }}"
-          to: jefe-de-equipo@tuempresa.com, tu-email@tuempresa.com # Destinatarios separados por coma
-          from: Alertas GitHub Actions <tu-email-remitente@gmail.com>
-
-          # 4. El mensaje del correo (Soporta variables de GitHub)
-          body: |
-            ¡Hola equipo!
-            
-            El PR pipeline continua ha FALLADO.
-            
-            - 🛠️ Proyecto: ${{ github.repository }}
-            - 🌿 Rama: ${{ github.ref_name }}
-            - 👨‍💻 Autor del cambio: ${{ github.actor }}
-            - 📝 Commit: ${{ github.sha }}
-            
-            Por favor, revisen los logs y corrijan el error lo antes posible:
-            https://github.com{{ github.repository }}/actions/runs/${{ github.run_id }}
+#      - name: Enviar correo de alerta por fallo
+#        uses: dawidd6/action-send-mail@v4
+#        with:
+#          # 1. Configuración de tu servidor de correo (Ejemplo con Gmail)
+#          server_address: ://gmail.com
+#          server_port: 465
+#
+#          # 2. Tus credenciales protegidas con GitHub Secrets (NUNCA las escribas en texto plano aquí)
+#          username: ${{ secrets.EMAIL_REMITENTE }}
+#          password: ${{ secrets.EMAIL_PASSWORD }}
+#
+#          # 3. Datos del correo electrónico
+#          subject: "🚨 ERROR: Falló el pipeline en el repositorio ${{ github.repository }}"
+#          to: jefe-de-equipo@tuempresa.com, tu-email@tuempresa.com # Destinatarios separados por coma
+#          from: Alertas GitHub Actions <tu-email-remitente@gmail.com>
+#
+#          # 4. El mensaje del correo (Soporta variables de GitHub)
+#          body: |
+#            ¡Hola equipo!
+#
+#            El PR pipeline continua ha FALLADO.
+#
+#            - 🛠️ Proyecto: ${{ github.repository }}
+#            - 🌿 Rama: ${{ github.ref_name }}
+#            - 👨‍💻 Autor del cambio: ${{ github.actor }}
+#            - 📝 Commit: ${{ github.sha }}
+#
+#            Por favor, revisen los logs y corrijan el error lo antes posible:
+#            https://github.com{{ github.repository }}/actions/runs/${{ github.run_id }}
