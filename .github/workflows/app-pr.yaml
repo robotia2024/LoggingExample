@@ -70,9 +70,10 @@ jobs:
 
       - name: Validacion de la instalacion de la app
         run: |
-          mkdir -p dist/extracted
-          unzip dist/paquete-app-compilado.zip -d dist/extracted
-          pip install dist/extracted/mi_super_app-1.0.0-py3-none-any.whl
+          ls -l dist
+          unzip dist/*.zip
+          ls -l dist
+          pip install dist/mi_super_app-1.0.0-py3-none-any.whl
 
       - name: Ejecutar Tests y Generar Cobertura
         # Indicamos que use pytest con cobertura sobre la carpeta de nuestra API (ej: 'app')
