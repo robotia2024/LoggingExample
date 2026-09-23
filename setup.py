@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Leemos el archivo README para usarlo como la descripción larga del proyecto
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("Readme.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
