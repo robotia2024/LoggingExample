@@ -1,0 +1,149 @@
+name: Release and dev deploy
+
+# Se ejecuta cuando un PR tiene exito
+on:
+  workflow_run:
+    workflows: [ "PR build and test" ]   # nombre exacto del primer workflow
+    types: [ completed ]
+  workflow_dispatch: # Esto activa un botón en GitHub para poder lanzar manualmente
+
+jobs:
+  # 1. BUILD AND TEST
+  build-test-and-upload:
+    if: >
+      ${
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.conclusion == 'success')
+        ||
+        github.event_name == 'workflow_dispatch'
+      }
+    runs-on: ubuntu-latest
+    outputs:
+      build_version: ${{ steps.date.outputs.VERSION }}
+    steps:
+    - name: Descargar código del repositorio
+      uses: actions/checkout@v4
+
+    # Genera la versión con la fecha y hora de la ejecución (Ej: 20260925.112000)
+    - name: Generar estampa de tiempo para la versión
+      id: date
+      run: |
+        VERSION=$(date +'%Y%m%d.%H%M%S')
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Instalar packages de la app
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Validar errores de sintaxis (Linter)
+      run: |
+        pip install flake8
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      #      - name: Formatear código (Estilo Black) Si alguien olvida formatear su código, el Build fallaria
+      #        run: |
+      #             pip install black
+      #             black --check .
+
+    - name: Inyectar la versión con fecha-hora en pyproject.toml
+      run: |
+        pip install sed
+        sed -i 's/^version = ".*"/version = "${{ steps.date.outputs.VERSION }}"/' pyproject.toml
+
+    - name: Construir archivo Wheel (.whl)
+      run: |
+        pip install setuptools wheel build
+        python -m build --wheel        
+
+    - name: Validacion del archivo wheel
+      run: |
+        pip install dist/*.whl
+        echo "Success: Comando para probar que el wheel creado se instala bien."
+
+    - name: Ejecutar Unit Tests
+      # Indicamos que use pytest, no necesario coverage, eso ya tenemos en PR
+      run: |
+        pip install pytest pytest-cov
+        pip install -r requirements_test.txt
+        pytest
+
+    - name: Upload Wheel a AWS mediante SFTP
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USER }}
+        key: ${{ secrets.AWS_SSH_KEY }}
+        source: "dist/*.whl"
+        target: "/home/ubuntu/builds"
+        strip_components: 1
+
+    - name: Crear Release Oficial en GitHub
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub te da este permiso automáticamente
+      with:
+        tag_name: ${{ steps.date.outputs.VERSION }}
+        release_name: Versión ${{ steps.date.outputs.VERSION }}
+        draft: false
+        prerelease: false
+
+  dev-deploy:
+    needs: build-test-and-upload
+    runs-on: ubuntu-latest
+    steps:
+    - name: Ejecutar script de despliegue en AWS pasando la fecha_hora
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AWS_HOST_DEV }}
+        username: ${{ secrets.AWS_USER_DEV }}
+        key: ${{ secrets.AWS_SSH_KEY_DEV }}
+        script: |
+          chmod +x /home/ubuntu/scripts/dev-deploy.sh
+          /home/ubuntu/scripts/dev-deploy.sh ${{ needs.build-test-and-upload.outputs.build_version }}
+
+  # TRABAJO 3: Notificación si algo sale mal (Solo corre si los anteriores fallan)
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: [ build-test, release, deploy-to-dev ] # Espera a que los otros terminen
+    if: failure() # ⚠️ IMPORTANTE: Solo se ejecuta si alguno de los anteriores falló
+    steps:
+      - name: ECHO alerta
+        run: |
+          echo "🚨 ALERTA: El release and dev deploy job ha fallado."
+          echo "Por favor, revisa los logs del flujo de trabajo."
+
+#      - name: Enviar correo de alerta por fallo
+#        uses: dawidd6/action-send-mail@v4
+#        with:
+#          # 1. Configuración de tu servidor de correo (Ejemplo con Gmail)
+#          server_address: ://gmail.com
+#          server_port: 465
+#
+#          # 2. Tus credenciales protegidas con GitHub Secrets (NUNCA las escribas en texto plano aquí)
+#          username: ${{ secrets.EMAIL_REMITENTE }}
+#          password: ${{ secrets.EMAIL_PASSWORD }}
+#
+#          # 3. Datos del correo electrónico
+#          subject: "🚨 ERROR: Falló el pipeline en el repositorio ${{ github.repository }}"
+#          to: jefe-de-equipo@tuempresa.com, tu-email@tuempresa.com # Destinatarios separados por coma
+#          from: Alertas GitHub Actions <tu-email-remitente@gmail.com>
+#
+#          # 4. El mensaje del correo (Soporta variables de GitHub)
+#          body: |
+#            ¡Hola equipo!
+#
+#            El Release-Dev deploy pipeline ha FALLADO.
+#
+#            - 🛠️ Proyecto: ${{ github.repository }}
+#            - 🌿 Rama: ${{ github.ref_name }}
+#            - 👨‍💻 Autor del cambio: ${{ github.actor }}
+#            - 📝 Commit: ${{ github.sha }}
+#
+#            Por favor, revisen los logs y corrijan el error lo antes posible:
+#            https://github.com{{ github.repository }}/actions/runs/${{ github.run_id }}

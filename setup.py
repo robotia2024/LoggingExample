@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     # 1. Datos básicos del paquete
-    name="mi-super-app",             # El nombre con el que se instalará (ej: pip install mi-super-api)
+    name="mi-app",             # El nombre con el que se instalará (ej: pip install mi-super-api)
     version="1.0.0",                 # La versión de tu software
     author="Tu Nombre o Empresa",
     author_email="tu-email@ejemplo.com",

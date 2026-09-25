@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mi_app"
+version = "1.0.0" # GitHub Actions cambiará esto dinámicamente
+dependencies = [
+#    "fastapi==0.110.0",
+#    "uvicorn==0.28.0"
+]

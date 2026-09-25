@@ -1,0 +1,25 @@
+name: Despliegue sEMI Automático a AWS
+
+# El robot se activa CADA VEZ que alguien pulsa el boton de dev-deploy_old
+on:
+  workflow_dispatch: # Esto activa un botón en GitHub para lanzar DEV DEPLOY manualmente
+
+jobs:
+  deploy-to-dev:
+    if: >
+      ${
+        github.event_name == 'workflow_dispatch'
+      }
+    runs-on: ubuntu-latest
+    steps:
+    # Paso único: Conectarse a AWS mediante SSH y ejecutar el script
+    - name: Ejecutar script de deploy en AWS por SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AWS_HOST }}         # La IP pública de tu servidor AWS
+        username: ${{ secrets.AWS_USER }}     # El usuario de tu AWS (ej: ubuntu o ec2-user)
+        key: ${{ secrets.AWS_SSH_KEY }}       # Tu llave privada (.pem) para entrar a AWS
+        script: |
+          chmod +x /home/ubuntu/mi-app/dev-deploy.sh
+          /home/ubuntu/mi-app/dev-deploy.sh
+          
